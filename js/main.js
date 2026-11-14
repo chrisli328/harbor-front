@@ -2014,6 +2014,14 @@ async function boot() {
   addEventListener('pointerdown', unlockAudio, true); addEventListener('pointerup', unlockAudio, true);
   addEventListener('pointerdown', e => { const t = e.target.closest && e.target.closest('button, .plot, .hit, #fightbtn'); if (t && !t.closest('#talk')) sfx.click(); }, true);
   world.addEventListener('click', e => { const p = e.target.closest('.plot'); if (!p) return; const b = p.querySelector('b'); if (!b) return; if (b.classList.contains('no')) noGold(b); else J.bump(b, 'tapd'); }, true);
+  // share video recording (task 46): the HQ and shed level tags sit on the spot the hand points at and took the tap with no
+  // handler, so a player tapping the hand's tip opened nothing and the first-star hint waited; a tag now opens its building
+  world.addEventListener('click', e => {
+    const l = e.target.closest('.lvl'), id = l && Object.keys(labels).find(k => labels[k] === l);
+    if (!id || !id.startsWith('lv-')) return;
+    const key = id.slice(3);
+    if (key === 'hq') openHq(); else if (S.sheds[key] && S.sheds[key].built) { if (cardKey === key) closeCard(); else openCard(key); }
+  });
   addEventListener('animationstart', e => { if ((e.animationName === 'bubin' || e.animationName === 'bubinb') && !e.target.classList.contains('bark')) sfx.click(); });
   if (QA) QA.ready = true;
   last = performance.now();
