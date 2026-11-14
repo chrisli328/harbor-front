@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+  <link rel="icon" href="img/ui-power.png">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1f9fc0">
+<title>Harbor Front</title>
+<link rel="stylesheet" href="css/game.css">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
+<link rel="modulepreload" href="vendor/three.module.js">
+<link rel="modulepreload" href="vendor/three.core.js">
+</head>
+<body data-lb="off">
+<div id="app">
+  <canvas id="cv"></canvas>
+  <canvas id="fx2d"></canvas>
+  <div id="world"></div>
+  <div id="dim" class="hidden"></div>
+
+  <!-- top-left: HQ badge, gold, power, INCOMING -->
+  <div id="tl">
+    <div id="hqbadge" class="hidden"><img src="img/ic-capt.png" alt=""><b id="t-hq">1</b></div>
+    <div id="tlcol">
+      <div class="tlrow"><div class="pill" id="p-gold"><img src="img/coin.png" alt=""><span id="t-gold">0</span></div><div class="pill hidden" id="p-gem"><img src="img/gem.png" alt=""><span id="t-gem">0</span></div></div>
+      <div class="pill hidden" id="p-power"><i class="shield"></i><span id="t-power">0</span></div>
+    </div>
+  </div>
+  <div id="incoming" class="hidden"><img src="img/inc-flag.png" alt=""><!-- R-300 round 8: the whole mothership at 34 px was a brown blur (second review); its skull bridge with fan rings read as a robot head (third review); Ironjaw's skull-and-crossbones flag --><div><b id="t-inc">14:00</b><span id="t-incs">INCOMING</span></div></div>
+  <div id="zboss" class="hidden"><b>PIRATE MOTHERSHIP</b><div class="bb"><i class="tr"></i><i class="hp"></i></div></div>
+
+  <!-- top-right: mission tag -->
+  <div id="mission"><div id="dots"></div><span id="t-mission">Mission-1</span></div>
+  <button id="b-gear" aria-label="Prototype test panel">TEST</button>
+
+  <!-- right: Upgrades -->
+  <button id="b-upg"><i></i><span>Upgrades</span><em id="upg-dot" class="hidden">!</em></button>
+
+  <!-- bottom-left: quest bar -->
+  <div id="questwrap">
+    <button id="b-heroes" class="hidden"><img src="img/heroes-cards.png" alt=""><span>Captains</span><em class="dot"></em></button>
+    <button id="b-fleet" aria-label="Fleet"><img src="img/gunboat-a.png" alt=""></button>
+    <button id="quest"><i class="clock"></i><span id="t-quest">Upgrade Gunboat to Lv.2 (1/2)</span></button>
+  </div>
+
+  <!-- upgrade card (pops above a shed) -->
+  <div id="card" class="hidden">
+    <h2 id="c-lv">Level 2</h2><h3 id="c-name">Gunboat</h3>
+    <div id="c-stars"></div>
+    <div id="c-prog"><i id="c-bar"></i><b>+1</b><img src="img/medal.png" alt=""></div>
+    <div id="c-box"><img id="c-img" src="img/gunboat-a.png" alt=""><div><p><i class="ic-dmg"></i><span id="c-dmg">30</span></p><p><i class="ic-clock"></i><span id="c-time">4s</span></p></div></div>
+    <button id="c-buy" class="blue"><em id="c-pro">Promote</em><img src="img/coin.png" alt=""><span id="c-cost">2</span></button>
+    <div id="c-tip"></div>
+  </div>
+
+  <!-- HQ panel: Military Base -> Harbor HQ with boost path -->
+  <div id="hq" class="panel hidden">
+    <div class="pill star"><img src="img/medal.png" alt=""><span id="h-stars">0</span></div>
+    <div class="pill coin" id="h-goldp"><img src="img/coin.png" alt=""><span id="h-gold">0</span></div>
+    <button class="x" data-close="hq">&#10005;</button>
+    <div id="hq-in">
+      <div id="hq-head"><h2>Lv. <b id="h-lv">1</b> Harbor HQ</h2><div id="h-bar"><i></i></div><img src="img/chest.png" alt=""></div>
+      <div id="hq-up"></div>
+      <div id="hq-list"></div>
+    </div>
+  </div>
+
+  <div id="confl"></div>
+  <!-- dialogue -->
+  <div id="talk" class="hidden">
+    <button id="skip">Skip &#10095;</button>
+    <div id="talk-wrap"><div id="talk-comic" class="hidden"><img src="" alt=""></div><img id="talk-por" src="" alt=""><div id="talk-box"><h4 id="talk-name"></h4><p id="talk-text"></p></div></div>
+  </div>
+
+  <div id="finger" class="hidden"></div>
+  <div id="toast" class="hidden"></div>
+  <div id="spot" class="hidden"></div>
+  <div id="callout"></div>
+  <div id="fxl"></div>
+  <div id="bwarn" class="hidden"><b>BOSS INCOMING</b><small>IRONJAW</small></div>
+  <div id="flash"></div>
+
+  <!-- reward popup -->
+  <div id="reward" class="hidden"><div class="rays"></div><img id="rw-img" src="img/chest-open.png" alt=""><div id="rw-items"></div><button class="green" id="rw-ok">Collect</button></div>
+
+  <!-- manual battle -->
+  <div id="fight" class="hidden">
+    <div id="f-top">
+      <div class="f-side"><img src="img/por-skye.png" alt=""><span><i class="shield"></i><b id="f-us">0</b></span></div>
+      <div id="f-shield">40</div>
+      <div class="f-side r"><span><b id="f-them">0</b><i class="shield red"></i></span><img src="img/por-ironjaw.png" alt=""></div>
+    </div>
+    <div id="f-vs" class="hidden"><div class="vs-l"><img src="img/por-skye.png" alt=""><b id="vs-us">0</b></div><i>VS</i><div class="vs-r"><img src="img/por-ironjaw.png" alt=""><b id="vs-them">0</b></div></div>
+    <div id="f-boss"><b>IRONJAW</b><div class="bb"><i class="tr"></i><i class="hp"></i></div></div>
+    <div id="f-heroes"></div>
+    <div id="f-timer">1:30</div>
+    <div id="f-bottom">
+      <button id="f-back" aria-label="Back">&#8630;</button>
+      <div id="f-energy"><i></i><b id="f-en">50</b></div>
+      <button id="f-card"><img src="img/gunboat-a.png" alt=""><span>Strike Squad</span><b><i></i>50</b></button>
+      <div id="f-tip" class="hidden">Tap to send a <em>squad</em>!</div>
+    </div>
+  </div>
+  <div id="ult" class="hidden"><div id="ult-card"><em>Ultimate-DPS</em><img src="img/hero-card.jpg" alt=""></div></div>
+  <div id="f-lose" class="hidden"><div class="box"><h2>Defeat</h2><p>Ironjaw held on this time.</p><div class="tip"><img id="fl-img" src="img/gunboat-a.png" alt=""><p id="fl-tip"></p></div><div class="btns"><button class="grey" id="fl-back">Harbor</button><button class="green" id="fl-retry">Retry</button></div></div></div>
+
+  <!-- win / end panels -->
+  <div id="hqup" class="hidden"><div class="hu-conf"></div><div class="hu-in">
+    <h2>HQ Upgrade</h2>
+    <div class="hu-badge"><div class="rays"></div><img src="img/hq-badge.png" alt=""><b id="hu-lv">2</b></div>
+    <div class="hu-row hu-pw"><span>Power</span><b id="hu-pa">0</b><i>&#10148;</i><b id="hu-pb" class="g">0</b></div>
+    <div class="hu-row hu-bo"><span>Boosts</span><b id="hu-a">0</b><i>&#10148;</i><b id="hu-b" class="g">5</b></div>
+    <h5>New Buildings</h5>
+    <div class="hu-new"><img id="hu-img" src="" alt=""><span id="hu-name"></span></div>
+    <p class="hu-tap">Tap to continue</p>
+  </div></div>
+  <!-- INCOMING (Top Force 9:40 and 30:00): boss art, countdown, rewards, two goals with Go; after the win, Claim -->
+  <div id="incp" class="hidden"><div class="ip-in">
+    <button class="ip-x" id="ip-x">&#10005;</button>
+    <div class="ip-art"><img src="img/boss-mother.png" alt=""><h2>INCOMING</h2></div>
+    <b class="ip-t" id="ip-t">14:00</b>
+    <h5><span>Rewards</span></h5>
+    <div class="ip-rw"><span><img src="img/gem.png" alt=""><b>100</b></span><span><img src="img/coin.png" alt=""><b>300</b></span></div>
+    <div id="ip-rows"></div>
+    <button class="green hidden" id="ip-claim">Claim</button>
+  </div></div>
+  <!-- full-screen boss banner (Top Force 25:10) -->
+  <div id="banner" class="hidden"><div class="bn-stripe"></div><img src="img/boss-mother.png" alt=""><h2>INCOMING</h2></div>
+  <!-- hero lineup before the manual fight (Top Force 25:40: deploy slots, hero cards, Quick Assign, Battles) -->
+  <div id="lineup" class="hidden">
+    <div class="lu-top"><span>Mission 40</span><b>Assign your captains</b></div>
+    <div class="lu-slots"><div class="lu-slot"></div><div class="lu-slot"></div></div>
+    <div class="lu-sheet">
+      <div class="lu-head">Your captains<small>Each one leads a squad of gunboats and helicopters</small></div>
+      <div class="lu-cards" id="lu-cards"></div>
+      <div class="lu-btns"><button class="blue" id="lu-back">&#8630;</button><button class="blue" id="lu-quick">Quick Assign</button><button class="green" id="lu-go">Battle</button></div>
+    </div>
+  </div>
+  <!-- first offer (Top Force 28:20): the hero just seen in the fight -->
+  <div id="offer" class="hidden"><div class="of-in">
+    <button class="ip-x" id="of-x">&#10005;</button>
+    <div class="of-head"><h2>Harbor Starter Pack</h2><b class="of-val">5x<br>VALUE</b></div>
+    <div class="of-box">
+      <img src="img/chest-open.png" alt="">
+      <div class="of-items"><span><img src="img/gem.png" alt=""><b>300</b></span><span><img src="img/coin.png" alt=""><b>2,000</b></span><span><img src="img/por-bram.png" alt=""><b>Bram x10</b></span></div>
+      <p class="of-d">Gems, gold and <b>10 Bram shards</b> to level up your new captain.</p>
+      <button class="gold" id="of-buy">US$0.99</button>
+      <s class="of-was">US$4.99</s>
+    </div>
+    <small>Prototype: no real purchase</small>
+  </div></div>
+  <!-- hero list (Top Force 33:00) -->
+  <div id="heroes" class="hidden">
+    <h2>Captains</h2>
+    <div class="hl-tabs" id="hl-tabs"><b class="on" data-t="">All</b><b data-t="gunboat">Gunboats</b><b data-t="torpedo">Torpedo</b><b data-t="destroyer">Helicopters</b></div>
+    <p class="hl-sum" id="hl-sum"></p>
+    <div class="hl-grid" id="hl-grid"></div>
+    <p class="hl-note">Tap a captain to see their skill. Shards from chests and packs unlock and level captains.</p>
+    <div id="hl-det" class="hidden"></div>
+    <button class="blue" id="hl-back">&#8630;</button>
+  </div>
+  <div id="victory" class="panel hidden"></div>
+  <div id="end" class="panel hidden"></div>
+
+  <!-- settings -->
+  <div id="settings" class="panel hidden">
+    <div class="sbox">
+    <button class="x" data-close="settings">&#10005;</button>
+    <h2>Prototype Test</h2>
+    <p class="row">Game speed <span class="seg" id="s-speed"><button data-v="1">x1</button><button data-v="2">x2</button><button data-v="3">x3</button></span></p>
+    <p class="row">Sound <span class="seg" id="s-sound"><button data-v="1">On</button><button data-v="0">Off</button></span></p>
+    <p class="row">Vibration <span class="seg" id="s-vibe"><button data-v="1">On</button><button data-v="0">Off</button></span></p>
+    <p class="row"><button class="blue" id="s-reset">Restart from Mission 1</button></p>
+    <p class="note">Prototype: Harbor Front, one loop of the Top Force: Commander tutorial and core loop on a navy theme.</p>
+    </div>
+  </div>
+</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

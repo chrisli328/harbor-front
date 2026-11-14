@@ -1,0 +1,19 @@
+Harbor Front prototype - credits
+
+Font
+  Barlow Condensed and Barlow Semi Condensed (Bold, ExtraBold, italics), by Jeremy Tribby.
+  SIL Open Font License 1.1 - fonts/Barlow-OFL.txt, https://openfontlicense.org
+  Source: https://github.com/jpt/barlow
+
+Art
+  3D world (round 2): ships, harbor, islands, sea and fog are built in code from three.js
+  primitives (js/look.js, js/models.js, js/terrain.js); no model files.
+  Portraits, hero card, icons and UI sprites are AI-generated for this prototype
+  (Codex built-in image generation), then cut and keyed with tools/cut.py and tools/patches.py.
+  No third-party game art is shipped. Top Force: Commander screenshots were used only on a local
+  side-by-side comparison page that is not part of this public copy.
+
+Code
+  three.js r186 (vendor/), MIT License, Copyright 2010-2026 three.js authors - see vendor/LICENSE.
+  https://github.com/mrdoob/three.js
+  Everything else written for this prototype.
